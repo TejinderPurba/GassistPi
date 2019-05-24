@@ -6,6 +6,8 @@ from oauth2client.tools import argparser
 import yaml
 import random
 import os
+import lxml
+from lxml import etree
 
 ROOT_PATH = os.path.realpath(os.path.join(__file__, '..', '..'))
 
@@ -41,6 +43,7 @@ def youtube_search(query, maximum=1):
     videoids = []
     channelids = []
     playlistids = []
+    titles = []
 
     # Add each result to the appropriate list, and then display the lists of
     # matching videos, channels, and playlists.
@@ -51,21 +54,25 @@ def youtube_search(query, maximum=1):
             videos.append('%s (%s)' % (search_result['snippet']['title'],
                                        search_result['id']['videoId']))
             videoids.append(search_result['id']['videoId'])
+            titles.append(search_result['snippet']['title'])
 
         elif search_result['id']['kind'] == 'youtube#channel':
             channels.append('%s (%s)' % (search_result['snippet']['title'],
                                          search_result['id']['channelId']))
             channelids.append(search_result['id']['channelId'])
 
+
         elif search_result['id']['kind'] == 'youtube#playlist':
             playlists.append('%s (%s)' % (search_result['snippet']['title'],
                                           search_result['id']['playlistId']))
             playlistids.append(search_result['id']['playlistId'])
 
+
     # Results of YouTube search. If you wish to see the results, uncomment them
     # print ('Videos\n', '\n'.join(videos), '\n')
     # print ('Channels:\n', '\n'.join(channels), '\n')
     # print ('Playlists:\n', '\n'.join(playlists), '\n')
+    print ('Titles\n', '\n'.join(titles), '\n')
 
     # Checks if your query is for a channel, playlist or a video and changes the URL accordingly
     if 'channel' in str(req).lower() and len(channels) != 0:
@@ -87,6 +94,7 @@ def youtube_search(query, maximum=1):
             ids = []
             for list_result in list_response.get('items', []):
                 ids.append(list_result['contentDetails']['videoId'])
+                
                 if len(ids) >= maximum:
                     return ids
             return ids
@@ -104,7 +112,7 @@ def youtube_search(query, maximum=1):
             for list_result in list_response.get('items', []):
                 ids.append(list_result['contentDetails']['videoId'])
                 if len(ids) >= maximum:
-                    return ids
+                    return ids,titles
             return ids
     elif len(videoids) != 0:
         if maximum == 1:

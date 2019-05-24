@@ -44,10 +44,17 @@ Keywords:
       - 'play next'
       - 'play next track'
       - 'play next song'
+      - 'next track'
+      - 'next song'
+      - 'go next'
+      - 'next'
+      - 'skip track'
+      - 'skip song'
     Previous:
       - 'play previous'
       - 'play previous track'
       - 'play previous song'
+      - 'go back'
   #Control music/vlc volume
   VLC_music_volume:
     - 'music volume'

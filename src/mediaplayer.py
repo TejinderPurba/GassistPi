@@ -142,6 +142,10 @@ class vlcplayer():
     def stop_vlc(self):
         print('stopping vlc')
         self.libvlc_player.stop()
+    
+    def seek_vlc(self,time_ms):
+        if time_ms is not None:
+            self.libvlc_player.set_time(time_ms)
 
     def pause_vlc(self):
         print('pausing vlc')

@@ -39,6 +39,7 @@ import pychromecast
 import spotipy
 import pprint
 import yaml
+from bs4 import BeautifulSoup
 
 ROOT_PATH = os.path.realpath(os.path.join(__file__, '..', '..'))
 USER_PATH = os.path.realpath(os.path.join(__file__, '..', '..','..'))
@@ -947,30 +948,31 @@ def kodiactions(phrase):
 
 #----------Getting urls for YouTube autoplay-----------------------------------
 def fetchautoplaylist(url,numvideos):
-    videourl=url
-    autonum=numvideos
     autoplay_urls=[]
-    autoplay_urls.append(videourl)
-    for i in range(0,autonum):
-        response=urllib.request.urlopen(videourl)
-        webContent = response.read()
-        webContent = webContent.decode('utf-8')
-        idx=webContent.find("Up next")
-        getid=webContent[idx:]
-        idx=getid.find('<a href="/watch?v=')
-        getid=getid[idx:]
-        getid=getid.replace('<a href="/watch?v=',"",1)
-        getid=getid.strip()
-        idx=getid.find('"')
-        videoid=getid[:idx]
-        videourl=('https://www.youtube.com/watch?v='+videoid)
-        if not videourl in autoplay_urls:
-            i=i+1
-            autoplay_urls.append(videourl)
-        else:
-            i=i-1
-            continue
-##    print(autoplay_urls)
+    yt_title=[]
+    check = ['channel', 'user', 'USER', 'radio']
+    mozhdr = {'User-Agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-GB; rv:1.9.0.3) Gecko/2008092417 Firefox/3.0.3'}
+    scrape_url="https://www.youtube.com"
+    search_url="/results?search_query="
+    url.replace(" ", "+")
+    sb_url = scrape_url + search_url + url
+    sb_get = requests.get(sb_url, headers = mozhdr)
+    sb_get.content
+    soupeddata = BeautifulSoup(sb_get.content, "html.parser")
+    yt_links = soupeddata.find_all("a", class_ = "yt-uix-tile-link")
+    counter = 0
+    
+    for x in yt_links:
+        if not any(c in x.get("href") for c in check):
+            autoplay_urls.append(x.get("href")[9:]) 
+            yt_title.append(x.get("title"))
+        counter += 1
+        if counter == 10:
+            break
+    with open('/home/pi/.urlslist.json', 'w') as output_file:
+        json.dump(autoplay_urls, output_file)
+    with open('/home/pi/.titlelist.json', 'w') as output_file:
+        json.dump(yt_title, output_file)
     return autoplay_urls
 
 
@@ -1127,29 +1129,39 @@ def YouTube_Autoplay(phrase):
         urllist=[]
         currenttrackid=0
         idx1=phrase.find('autoplay')
-        idx2=phrase.find(custom_action_keyword['Dict']['From_youtube'])
-        track=phrase[idx1:idx2]
+
+        idx2=phrase.find('on youtube')
+
+        idx3=phrase.find('auto play')
+        print("Numbers1:\n", idx1)
+        print("Numbers2:\n", idx2)
+        print("Numbers3:\n", idx3)
+        if idx1 == -1:
+            track=phrase[idx3:idx2]
+        else:
+            track=phrase[idx1:idx2]
+        track=track.replace("'}", "",1)
         track = track.replace('autoplay','',1)
-        track = track.replace(custom_action_keyword['Dict']['From_youtube'],'',1)
+        track = track.replace('auto play','',1)
+        track = track.replace('on youtube','',1)
         track=track.strip()
-        say("Getting autoplay links")
-        print(track)
-        autourls=youtube_search(track,10) # Maximum of 10 URLS
-        print(autourls)
-        say("Adding autoplay links to the playlist")
+        say("You got it... give me a second to find the tracks")
+        print("Track: "+track)
+        autourls=fetchautoplaylist(track,15)#Maximum of 10 URLS
+        #say("Adding autoplay links to the playlist")
         for i in range(0,len(autourls)):
             audiostream,videostream=youtube_stream_link(autourls[i])
             streamurl=audiostream
             urllist.append(streamurl)
         if not urllist==[]:
-                vlcplayer.media_manager(urllist,'YouTube')
-                vlcplayer.youtube_player(currenttrackid)
+            vlcplayer.media_manager(urllist,'YouTube')
+            vlcplayer.youtube_player(currenttrackid)
         else:
             say("Unable to find songs matching your request")
             
     except Exception as e: 
         print(e)        
-        say('Encountered an exception please check the logs.')
+        say('Encountered an exception please check the logs. Two')
 
 def YouTube_No_Autoplay(phrase):
     try:
@@ -1161,7 +1173,7 @@ def YouTube_No_Autoplay(phrase):
         track = track.replace(custom_action_keyword['Dict']['Play'],'',1)
         track = track.replace(custom_action_keyword['Dict']['From_youtube'],'',1)
         track=track.strip()
-        say("Getting youtube link")
+        say("You got it...")
         print(track)
         urlid=youtube_search(track)
         if urlid is not None:
@@ -1740,3 +1752,31 @@ def Action(phrase):
                         say("Turning Off " + name)
         else:
             say("GPIO controls, is not supported for your device.")
+            
+#-----------------------Start of custom functions--------------------------
+def SongName(flag):
+    if flag== 1:
+        with open('/home/pi/.player.json', 'r') as input_file:
+            playerinfo= json.load(input_file)
+        with open('/home/pi/.titlelist.json', 'r') as input_file:
+            titleinfo= json.load(input_file)
+        songNum = playerinfo[0]-1
+        songAmt = playerinfo[1]
+        if songAmt>1:
+            titleName = titleinfo[songNum].lower().replace('official music video','',1)
+            titleName = titleName.replace('official audio','',1)
+            titleName = titleName.replace('official video','',1)
+            titleName = titleName.replace('audio','',1)
+            titleName = titleName.replace('music','',1)
+            titleName = titleName.replace('lyrics','',1)
+            say("The track is called " + titleName)
+        elif songAmt==1:
+            titleName = titleinfo.lower().replace('official music video','',1)
+            titleName = titleName.replace('official audio','',1)
+            titleName = titleName.replace('official video','',1)
+            titleName = titleName.replace('audio','',1)
+            titleName = titleName.replace('music','',1)
+            titleName = titleName.replace('lyrics','',1)
+            say("The track is called " + titleName)   
+    elif flag== 2:
+        say("Nothings playing right now")

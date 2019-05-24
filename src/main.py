@@ -56,6 +56,7 @@ from actions import YouTube_Autoplay
 from actions import stop
 from actions import radio
 from actions import ESP
+from actions import SongName
 from actions import track
 from actions import feed
 from actions import kodiactions
@@ -109,7 +110,6 @@ WARNING_NOT_REGISTERED = """
     This device is not registered. This means you will not be able to use
     Device Actions or see your device in Assistant Settings. In order to
     register this device follow instructions at:
-
     https://developers.google.com/assistant/sdk/guides/library/python/embed/register-device
 """
 
@@ -726,15 +726,18 @@ class Myassistant():
                 self.assistant.stop_conversation()
                 Action(str(usrcmd).lower())
         if configuration['YouTube']['YouTube_Control']=='Enabled':
+            self.assistant.stop_conversation()
             if (custom_action_keyword['Keywords']['YouTube_music_stream'][0]).lower() in str(usrcmd).lower() and 'kodi' not in str(usrcmd).lower() and 'chromecast' not in str(usrcmd).lower():
                 self.assistant.stop_conversation()
                 vlcplayer.stop_vlc()
                 if not Youtube_credentials:
                     say("Hey, you need to enter your google cloud api in the config file first.")
                 else:
-                    if 'autoplay'.lower() in str(usrcmd).lower():
+                    if 'autoplay'.lower() in str(usrcmd).lower() or 'auto play'.lower() in str(usrcmd).lower():
+                        self.assistant.stop_conversation()
                         YouTube_Autoplay(str(usrcmd).lower())
                     else:
+                        self.assistant.stop_conversation()
                         YouTube_No_Autoplay(str(usrcmd).lower())
         if (custom_action_keyword['Keywords']['Stop_music'][0]).lower() in str(usrcmd).lower():
             stop()
@@ -781,20 +784,31 @@ class Myassistant():
                     vlcplayer.play_vlc()
             elif vlcplayer.is_vlc_playing()==False and checkvlcpaused()==False:
                 say("Sorry nothing is playing right now")
-        if (custom_action_keyword['Keywords']['Track_change']['Next'][0]).lower() in str(usrcmd).lower() or (custom_action_keyword['Keywords']['Track_change']['Next'][1]).lower() in str(usrcmd).lower() or (custom_action_keyword['Keywords']['Track_change']['Next'][2]).lower() in str(usrcmd).lower():
+        if (custom_action_keyword['Keywords']['Track_change']['Next'][0]).lower() in str(usrcmd).lower() or (custom_action_keyword['Keywords']['Track_change']['Next'][1]).lower() in str(usrcmd).lower() or (custom_action_keyword['Keywords']['Track_change']['Next'][2]).lower() in str(usrcmd).lower() or (custom_action_keyword['Keywords']['Track_change']['Next'][3]).lower() in str(usrcmd).lower() or (custom_action_keyword['Keywords']['Track_change']['Next'][4]).lower() in str(usrcmd).lower() or (custom_action_keyword['Keywords']['Track_change']['Next'][5]).lower() in str(usrcmd).lower() or (custom_action_keyword['Keywords']['Track_change']['Next'][6]).lower() in str(usrcmd).lower() or (custom_action_keyword['Keywords']['Track_change']['Next'][7]).lower() in str(usrcmd).lower() or (custom_action_keyword['Keywords']['Track_change']['Next'][8]).lower() in str(usrcmd).lower():
             self.assistant.stop_conversation()
             if vlcplayer.is_vlc_playing() or checkvlcpaused()==True:
                 vlcplayer.stop_vlc()
                 vlcplayer.change_media_next()
             elif vlcplayer.is_vlc_playing()==False and checkvlcpaused()==False:
                 say("Sorry nothing is playing right now")
-        if (custom_action_keyword['Keywords']['Track_change']['Previous'][0]).lower() in str(usrcmd).lower() or (custom_action_keyword['Keywords']['Track_change']['Previous'][1]).lower() in str(usrcmd).lower() or (custom_action_keyword['Keywords']['Track_change']['Previous'][2]).lower() in str(usrcmd).lower():
+        if (custom_action_keyword['Keywords']['Track_change']['Previous'][0]).lower() in str(usrcmd).lower() or (custom_action_keyword['Keywords']['Track_change']['Previous'][1]).lower() in str(usrcmd).lower() or (custom_action_keyword['Keywords']['Track_change']['Previous'][2]).lower() in str(usrcmd).lower() or (custom_action_keyword['Keywords']['Track_change']['Previous'][3]).lower() in str(usrcmd).lower():
             self.assistant.stop_conversation()
             if vlcplayer.is_vlc_playing() or checkvlcpaused()==True:
                 vlcplayer.stop_vlc()
                 vlcplayer.change_media_previous()
             elif vlcplayer.is_vlc_playing()==False and checkvlcpaused()==False:
                 say("Sorry nothing is playing right now")
+        if 'main volume'.lower() in str(usrcmd).lower():
+            self.assistant.stop_conversation()
+            if 'set'.lower() in str(usrcmd).lower() or 'change'.lower() in str(usrcmd).lower():
+                if 'hundred'.lower() in str(usrcmd).lower() or 'maximum' in str(usrcmd).lower():
+                    settingvollevel=100
+                elif 'zero'.lower() in str(usrcmd).lower() or 'minimum' in str(usrcmd).lower():
+                    settingvollevel=0
+                else:
+                    for settingvollevel in re.findall(r"[-+]?\d*\.\d+|\d+", str(usrcmd)):
+                        pass
+                os.system("amixer set Master "+settingvollevel+"%")
         if (custom_action_keyword['Keywords']['VLC_music_volume'][0]).lower() in str(usrcmd).lower():
             self.assistant.stop_conversation()
             if vlcplayer.is_vlc_playing()==True or checkvlcpaused()==True:
@@ -902,6 +916,30 @@ class Myassistant():
             if (custom_action_keyword['Keywords']['Send_sms_clickatell'][0]).lower() in str(usrcmd).lower():
                 self.assistant.stop_conversation()
                 sendSMS(str(usrcmd).lower())
+        if 'what song is this'.lower() in str(usrcmd).lower() or 'what is this'.lower() in str(usrcmd).lower() or 'what track is this'.lower() in str(usrcmd).lower() or 'who is this'.lower() in str(usrcmd).lower():
+                self.assistant.stop_conversation()
+                if vlcplayer.is_vlc_playing()==True or checkvlcpaused()==True:
+                    flag=1
+                elif vlcplayer.is_vlc_playing()==False and checkvlcpaused()==False:
+                    flag=2
+                SongName(flag)
+        if 'skip to'.lower() in str(usrcmd).lower() or 'seek to'.lower() in str(usrcmd).lower() or 'go to'.lower() in str(usrcmd).lower():
+                self.assistant.stop_conversation()
+                seek_time=[]
+                time = None
+                for x in re.findall(r"[-+]?\d*\.\d+|\d+", str(usrcmd)):
+                    seek_time.append(x)
+                if 'minutes'.lower() in str(usrcmd).lower() or 'minute'.lower() in str(usrcmd).lower():
+                    if 'seconds'.lower() in str(usrcmd).lower() or 'second'.lower() in str(usrcmd).lower():
+                        time = (int(seek_time[0])*60000) + (int(seek_time[1])*1000)
+                    else:
+                        time = int(seek_time[0])*60000
+                elif 'seconds'.lower() in str(usrcmd).lower() or 'second'.lower() in str(usrcmd).lower():
+                    time = int(seek_time[0])*1000
+                else:
+                    time = int(seek_time[0])*1000
+                print(time)
+                vlcplayer.seek_vlc(time)
         if 'interpreter' in str(usrcmd).lower():
             self.assistant.stop_conversation()
             reqlang=str(usrcmd).lower()

@@ -96,7 +96,7 @@ Pushbullet:
   Pushbullet_Control: 'Enabled'
 
 #API Key for YouTube and Kickstarter Search Engine
-Google_cloud_api_key: "ENTER-YOUR-GOOGLE-CLOUD-API-KEY-HERE"
+Google_cloud_api_key: AIzaSyBMfju_Jn1nWiB2ACDSIrb-RMq2tOtUKT8
 
 #GPIOS used in the project. Feel free to change in case.
 Gpios:
@@ -263,7 +263,7 @@ TextToSpeech:
 #To enable custom wakeword, change status to Enabled and restart the assistant.
 Wakewords:
   Ok_Google: 'Enabled'
-  Custom_Wakeword: 'Enabled'
+  Custom_Wakeword: 'Disabled'
   Custom_wakeword_models:
     - '/home/pi/GassistPi/src/resources/alexa.umdl'
     - '/home/pi/GassistPi/src/resources/snowboy.umdl'
