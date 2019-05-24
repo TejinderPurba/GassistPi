@@ -96,7 +96,7 @@ Pushbullet:
   Pushbullet_Control: 'Enabled'
 
 #API Key for YouTube and Kickstarter Search Engine
-Google_cloud_api_key: AIzaSyBMfju_Jn1nWiB2ACDSIrb-RMq2tOtUKT8
+Google_cloud_api_key: AIzaSyBMfju_Jn1nWiB2ACDSIrb-XXXX
 
 #GPIOS used in the project. Feel free to change in case.
 Gpios:
